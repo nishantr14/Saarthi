@@ -2,7 +2,7 @@ import type { IntegrationStatus } from "./types";
 
 export const env = {
   geminiKey: process.env.GEMINI_API_KEY?.trim() || "",
-  geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash",
+  geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
   sarvamKey: process.env.SARVAM_API_KEY?.trim() || "",
   sarvamTtsModel: process.env.SARVAM_TTS_MODEL?.trim() || "bulbul:v3",
   sarvamSpeaker: process.env.SARVAM_TTS_SPEAKER?.trim() || "priya",

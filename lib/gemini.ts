@@ -13,33 +13,54 @@ export interface ChatTurn {
  * heuristic when no GEMINI_API_KEY is present, so the agent loop never breaks.
  */
 
-async function generateJSON<T>(prompt: string): Promise<T | null> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Models tried in order; transient 429/500/503 are retried with backoff. */
+function modelChain(): string[] {
+  return [env.geminiModel, "gemini-flash-latest", "gemini-2.0-flash-lite"].filter(
+    (v, i, a) => v && a.indexOf(v) === i
+  );
+}
+
+async function withModel<T>(run: (genAI: GoogleGenerativeAI, model: string) => Promise<T>): Promise<T | null> {
   if (!hasGemini()) return null;
-  try {
-    const genAI = new GoogleGenerativeAI(env.geminiKey);
+  const genAI = new GoogleGenerativeAI(env.geminiKey);
+  for (const name of modelChain()) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await run(genAI, name);
+      } catch (e: unknown) {
+        const status = (e as { status?: number })?.status;
+        if (status === 429 || status === 500 || status === 503) {
+          await sleep(600 * (attempt + 1)); // transient — back off and retry
+          continue;
+        }
+        console.error(`[gemini] ${name} failed (status ${status ?? "?"}):`, (e as Error)?.message);
+        break; // non-retryable — try the next model in the chain
+      }
+    }
+  }
+  return null;
+}
+
+async function generateJSON<T>(prompt: string): Promise<T | null> {
+  return withModel(async (genAI, name) => {
     const model = genAI.getGenerativeModel({
-      model: env.geminiModel,
+      model: name,
       generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
     });
     const res = await model.generateContent(prompt);
     return JSON.parse(res.response.text()) as T;
-  } catch (e) {
-    console.error("[gemini] JSON generation failed, using fallback:", e);
-    return null;
-  }
+  });
 }
 
 async function generateText(prompt: string): Promise<string | null> {
-  if (!hasGemini()) return null;
-  try {
-    const genAI = new GoogleGenerativeAI(env.geminiKey);
-    const model = genAI.getGenerativeModel({ model: env.geminiModel, generationConfig: { temperature: 0.6 } });
+  const out = await withModel(async (genAI, name) => {
+    const model = genAI.getGenerativeModel({ model: name, generationConfig: { temperature: 0.6 } });
     const res = await model.generateContent(prompt);
     return res.response.text().trim();
-  } catch (e) {
-    console.error("[gemini] text generation failed, using fallback:", e);
-    return null;
-  }
+  });
+  return out;
 }
 
 export interface Decomposition {
