@@ -1,6 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env, hasGemini } from "./config";
 import type { Task } from "./types";
+import { parseWhen, extractTaskTitle } from "./parse";
+
+export interface ChatTurn {
+  role: "user" | "saarthi";
+  text: string;
+}
 
 /**
  * The Gemini "brain". Every function degrades gracefully to a deterministic
@@ -89,13 +95,21 @@ export interface ChatResult {
 }
 
 /** Conversational agent turn. Returns a reply plus a structured intent. */
-export async function chatRespond(message: string, tasksSummary: string): Promise<ChatResult> {
+export async function chatRespond(message: string, tasksSummary: string, history: ChatTurn[] = []): Promise<ChatResult> {
+  const transcript = history
+    .slice(-6)
+    .map((t) => `${t.role === "user" ? "User" : "Saarthi"}: ${t.text}`)
+    .join("\n");
+  const today = new Date().toISOString();
+
   const ai = await generateJSON<ChatResult>(
-    `You are Saarthi, a proactive AI chief-of-staff that helps people beat deadlines. You are warm, direct, and action-oriented. The user may speak in English or Hinglish.
+    `You are Saarthi, a proactive AI chief-of-staff that helps people beat deadlines. You are warm, direct, and action-oriented. The user may speak in English or Hinglish (e.g. "kal", "raat 10 baje", "bach lo").
+Now (ISO): ${today}
 Current tasks:\n${tasksSummary}\n
-User said: "${message}"
-Decide the intent and reply in one or two friendly sentences.
-- "add_task" if they describe a new task/commitment (extract a title, and an ISO deadline if they hint at one, and a minutes estimate).
+Recent conversation:\n${transcript || "(none)"}\n
+User just said: "${message}"
+Decide the intent and reply in one or two friendly sentences. Use the conversation to resolve references (e.g. a follow-up that only gives a time refers to the task mentioned just before).
+- "add_task" if they describe a new task/commitment. Extract a concise title, an absolute ISO deadline if they hint at one (resolve "kal"/"tomorrow"/"raat 10 baje" against Now above), and a minutes estimate.
 - "run_agent" if they want you to plan/organize/take action across everything.
 - "rescue" if they sound panicked or out of time ("I'm screwed", "bach lo", "no time").
 - "status" if they ask what's pending or how things look.
@@ -103,7 +117,7 @@ Decide the intent and reply in one or two friendly sentences.
 Respond as JSON: {"reply": string, "intent": string, "task"?: {"title": string, "deadline"?: string, "estimatedMinutes"?: number}}.`
   );
   if (ai && ai.reply) return ai;
-  return heuristicChat(message);
+  return heuristicChat(message, history);
 }
 
 /** A warm spoken briefing the voice layer narrates. */
@@ -115,25 +129,52 @@ export async function briefing(prompt: string): Promise<string | null> {
 
 // ── Heuristics ────────────────────────────────────────────────────────────
 
-function heuristicChat(message: string): ChatResult {
+function heuristicChat(message: string, history: ChatTurn[] = []): ChatResult {
   const m = message.toLowerCase();
-  if (/(screw|panic|bach\s?lo|no time|out of time|help me|emergency|last minute)/.test(m)) {
+
+  if (/(screw|panic|bach\s?lo|bacha\s?lo|no time|out of time|help me|emergency|last minute|stress|tension|phas?\s?gaya|marr?\s?gaya)/.test(m)) {
     return { reply: "Breathe — I've got you. Pulling up your most urgent deadlines and prepping what I can right now.", intent: "rescue" };
   }
-  if (/(plan|organi[sz]e|sort|schedule|take over|handle everything|what should i do)/.test(m)) {
+  if (/(plan my|organi[sz]e|sort (my|everything)|schedule my|take over|handle everything|what should i do|plan (everything|my day)|sab kuch)/.test(m)) {
     return { reply: "On it. Planning your day, booking focus blocks, and drafting what I can.", intent: "run_agent" };
   }
-  if (/(what'?s? (pending|left|due)|status|how (are|do) things)/.test(m)) {
+  if (/(what'?s? (pending|left|due|urgent|most)|status|how (are|do) things|kya pending|kitna)/.test(m)) {
     return { reply: "Here's where things stand — your riskiest deadlines are at the top.", intent: "status" };
   }
-  if (/(remind|add|need to|have to|gotta|submit|pay|send|call|book|finish)/.test(m)) {
+
+  // Task capture with Hinglish/date understanding.
+  const when = parseWhen(message);
+  let title = extractTaskTitle(message);
+
+  // Follow-up: a message that's basically just a time refers to the prior task.
+  if (!title && when.iso) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].role === "user") {
+        const prior = extractTaskTitle(history[i].text);
+        if (prior) { title = prior; break; }
+      }
+    }
+  }
+
+  const taskish =
+    /(exam|test|quiz|paper|assignment|viva|project|submission|lab|report|homework|\bhw\b|deadline|due|submit|jama|pay|bill|recharge|meeting|call|interview|appointment|book|buy|email|send|presentation|demo|ppt|slide|finish|complete|prepare|prep)/.test(m);
+
+  if (when.iso || (title && taskish)) {
+    const finalTitle = title || "New task";
+    const whenPart = when.label ? ` — ${when.label}` : "";
     return {
-      reply: `Added "${trim(message, 60)}" and I'll keep an eye on it.`,
+      reply: `Locked in: ${finalTitle}${whenPart}. I'll break it down and start tracking the risk.`,
       intent: "add_task",
-      task: { title: trim(message, 80) },
+      task: { title: finalTitle, deadline: when.iso },
     };
   }
-  return { reply: "Got it. Tell me a deadline and I'll plan it, or say 'rescue me' if you're cutting it close.", intent: "chat" };
+
+  if (taskish) {
+    const t = title || trim(message, 60);
+    return { reply: `Added "${t}". When's it due? Tell me and I'll plan it.`, intent: "add_task", task: { title: t } };
+  }
+
+  return { reply: "Got it. Tell me what's due and when — e.g. “kal raat 10 baje DBMS exam” — and I'll plan it. Or say “rescue me” if you're cutting it close.", intent: "chat" };
 }
 
 export function guessCategory(text: string): string {

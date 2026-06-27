@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const { message } = await req.json().catch(() => ({ message: "" }));
+  const { message, history } = await req.json().catch(() => ({ message: "" }));
   if (!message) return NextResponse.json({ error: "message required" }, { status: 400 });
 
   const tasks = listTasks();
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     .map((t) => `- ${t.title} (due ${new Date(t.deadline).toLocaleString()}, ${t.progress}% done)`)
     .join("\n");
 
-  const result = await chatRespond(message, summary);
+  const result = await chatRespond(message, summary, Array.isArray(history) ? history : []);
 
   // Carry out the decided intent so the agent actually *does* something.
   if (result.intent === "add_task" && result.task?.title) {

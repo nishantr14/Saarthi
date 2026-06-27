@@ -105,11 +105,11 @@ export default function Dashboard() {
   }
 
   const sendChat = useCallback(
-    async (text: string): Promise<string> => {
+    async (text: string, history: { role: "user" | "saarthi"; text: string }[] = []): Promise<string> => {
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, history }),
       });
       const result = await res.json();
       await refresh();

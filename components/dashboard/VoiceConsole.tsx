@@ -13,7 +13,7 @@ interface Msg {
 
 const SUGGESTIONS = ["Plan my day", "Rescue me — I'm out of time", "Add: pay rent by tomorrow 6pm", "What's most urgent?"];
 
-export function VoiceConsole({ onSend }: { onSend: (text: string) => Promise<string> }) {
+export function VoiceConsole({ onSend }: { onSend: (text: string, history: Msg[]) => Promise<string> }) {
   const [messages, setMessages] = useState<Msg[]>([
     { role: "saarthi", text: "I'm Saarthi. Tell me what's on your plate — by voice or text — and I'll plan, draft, and rescue. Try “plan my day.”" },
   ]);
@@ -27,10 +27,11 @@ export function VoiceConsole({ onSend }: { onSend: (text: string) => Promise<str
     if (!t || busy) return;
     setInput("");
     setHint(null);
+    const priorHistory = messages;
     setMessages((m) => [...m, { role: "user", text: t }]);
     setBusy(true);
     try {
-      const reply = await onSend(t);
+      const reply = await onSend(t, priorHistory);
       setMessages((m) => [...m, { role: "saarthi", text: reply }]);
       speak(reply);
     } catch {

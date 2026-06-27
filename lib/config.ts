@@ -5,7 +5,7 @@ export const env = {
   geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash",
   sarvamKey: process.env.SARVAM_API_KEY?.trim() || "",
   sarvamTtsModel: process.env.SARVAM_TTS_MODEL?.trim() || "bulbul:v3",
-  sarvamSpeaker: process.env.SARVAM_TTS_SPEAKER?.trim() || "anushka",
+  sarvamSpeaker: process.env.SARVAM_TTS_SPEAKER?.trim() || "priya",
   sarvamSttModel: process.env.SARVAM_STT_MODEL?.trim() || "saaras:v3",
   googleClientId: process.env.GOOGLE_CLIENT_ID?.trim() || "",
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET?.trim() || "",
