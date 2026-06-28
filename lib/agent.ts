@@ -65,6 +65,7 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
     ts: nowIso(),
     type: "sense",
     tier: "calm",
+    agent: "Sentinel",
     summary: `Sensed ${tasks.length} open tasks${busy.length ? ` and ${busy.length} calendar conflicts` : ""}`,
     simulated: busyRaw.length === 0,
   });
@@ -90,6 +91,7 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
         ts: nowIso(),
         type: "nudge",
         tier: "nudge",
+        agent: "Voice",
         taskId: task.id,
         summary: `Nudge: "${task.title}" is at risk`,
         detail: a.reasons.join(" · "),
@@ -126,6 +128,7 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
         ts: nowIso(),
         type: "book_block",
         tier: a.tier,
+        agent: "Scheduler",
         taskId: task.id,
         summary: `${cal.simulated ? "(demo) " : ""}Booked ${formatDuration(dur)} focus block for "${task.title}"`,
         detail: `${new Date(slot.start).toLocaleString()} → ${new Date(slot.end).toLocaleTimeString()}`,
@@ -143,6 +146,7 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
         ts: nowIso(),
         type: "draft_email",
         tier: a.tier,
+        agent: "Drafter",
         taskId: task.id,
         summary: `${res.simulated ? "(demo) " : ""}Drafted email: "${d.subject}"`,
         detail: d.body.slice(0, 160) + (d.body.length > 160 ? "…" : ""),
@@ -156,6 +160,7 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
         ts: nowIso(),
         type: "rescue",
         tier: "rescue",
+        agent: "Sentinel",
         taskId: task.id,
         summary: `Taking over "${task.title}" — highest risk`,
         detail: a.reasons.join(" · "),
@@ -181,6 +186,7 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
     ts: nowIso(),
     type: "plan",
     tier: topRescue.length ? "rescue" : booked ? "act" : "calm",
+    agent: "Planner",
     summary: "Cycle complete — plan is live",
     detail: summaryLine,
     simulated: false,
@@ -189,7 +195,25 @@ export async function runAgentCycle(): Promise<AgentRunResult> {
   addBlocks(newBlocks);
   addActions(actions);
 
-  return { actions, blocks: newBlocks, assessments, briefing: spoken };
+  const trace = actions
+    .filter((a) => a.agent)
+    .map((a) => ({ agent: a.agent!, thought: a.summary, tool: a.type, result: a.detail }));
+
+  return { actions, blocks: newBlocks, assessments, briefing: spoken, trace, llmDriven: false };
+}
+
+/**
+ * Public entry point: run the Gemini function-calling swarm, falling back to
+ * the deterministic Sense→Think→Act→Reflect loop if the LLM is unavailable.
+ */
+export async function runAgent(): Promise<AgentRunResult> {
+  try {
+    const { runAgentSwarm } = await import("./swarm");
+    return await runAgentSwarm();
+  } catch (e) {
+    console.error("[agent] swarm failed, using deterministic loop:", (e as Error)?.message);
+    return runAgentCycle();
+  }
 }
 
 /**

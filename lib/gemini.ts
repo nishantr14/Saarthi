@@ -17,7 +17,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Models tried in order; transient 429/500/503 are retried with backoff. */
 function modelChain(): string[] {
-  return [env.geminiModel, "gemini-flash-latest", "gemini-2.0-flash-lite"].filter(
+  return [env.geminiModel, "gemini-2.5-flash", "gemini-flash-lite-latest"].filter(
     (v, i, a) => v && a.indexOf(v) === i
   );
 }

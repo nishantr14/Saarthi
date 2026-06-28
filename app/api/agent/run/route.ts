@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { runAgentCycle } from "@/lib/agent";
+import { runAgent } from "@/lib/agent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const result = await runAgentCycle();
+  const result = await runAgent();
   return NextResponse.json(result);
 }

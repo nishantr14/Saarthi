@@ -10,10 +10,11 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { Timeline } from "@/components/dashboard/Timeline";
 import { VoiceConsole } from "@/components/dashboard/VoiceConsole";
 import { RescueOverlay } from "@/components/dashboard/RescueOverlay";
+import { SwarmTrace } from "@/components/dashboard/SwarmTrace";
 import { AddTaskDialog } from "@/components/dashboard/AddTaskDialog";
 import { useVoice } from "@/lib/useVoice";
 import { formatDuration } from "@/lib/risk";
-import type { AgentAction, IntegrationStatus, PlanBlock, RescueResult, RiskAssessment, Task } from "@/lib/types";
+import type { AgentAction, IntegrationStatus, PlanBlock, RescueResult, RiskAssessment, Task, TraceStep } from "@/lib/types";
 
 interface Data {
   tasks: Task[];
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [running, setRunning] = useState(false);
   const [rescue, setRescue] = useState<RescueResult | null>(null);
+  const [swarm, setSwarm] = useState<{ trace: TraceStep[]; llmDriven: boolean } | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { speak, speaking } = useVoice();
@@ -55,6 +57,7 @@ export default function Dashboard() {
       const result = await res.json();
       await refresh();
       showToast(`Agent ran · ${result.blocks.length} blocks booked`);
+      if (result.trace?.length) setSwarm({ trace: result.trace, llmDriven: !!result.llmDriven });
       if (result.briefing) speak(result.briefing);
     } finally {
       setRunning(false);
@@ -250,6 +253,7 @@ export default function Dashboard() {
           />
         )}
         {showAdd && <AddTaskDialog onClose={() => setShowAdd(false)} onAdd={addTask} />}
+        {swarm && <SwarmTrace trace={swarm.trace} llmDriven={swarm.llmDriven} onClose={() => setSwarm(null)} />}
       </AnimatePresence>
 
       {/* Toast */}

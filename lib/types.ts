@@ -51,6 +51,9 @@ export type AgentActionType =
   | "rescue"
   | "complete";
 
+/** The specialized agents in the Saarthi swarm. */
+export type AgentName = "Sentinel" | "Planner" | "Scheduler" | "Drafter" | "Voice";
+
 /** One entry in the transparent agent activity feed. */
 export interface AgentAction {
   id: string;
@@ -60,8 +63,19 @@ export interface AgentAction {
   summary: string;
   detail?: string;
   taskId?: string;
+  /** which specialized agent performed the action. */
+  agent?: AgentName;
   /** true when the action was simulated (demo mode / no creds). */
   simulated: boolean;
+}
+
+/** One step in the agent swarm's reasoning trace (shown in the UI). */
+export interface TraceStep {
+  agent: AgentName;
+  thought: string;
+  tool?: string;
+  args?: Record<string, unknown>;
+  result?: string;
 }
 
 export interface RiskAssessment {
@@ -83,6 +97,10 @@ export interface AgentRunResult {
   assessments: RiskAssessment[];
   /** spoken summary the voice layer can narrate. */
   briefing: string;
+  /** the agent swarm's step-by-step reasoning (function-calling trace). */
+  trace?: TraceStep[];
+  /** true when Gemini function-calling drove the run (vs. deterministic fallback). */
+  llmDriven?: boolean;
 }
 
 export interface RescueResult {

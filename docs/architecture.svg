@@ -1,0 +1,80 @@
+<svg viewBox="0 0 860 560" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c5cff"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <style>
+      .lbl{fill:#e7e7f5;font-size:13px}
+      .sub{fill:#a0a0b8;font-size:11px}
+      .h{fill:#fff;font-size:14px;font-weight:700}
+      .box{fill:#14131f;stroke:#2c2b40;stroke-width:1.5;rx:14}
+      .pill{fill:#1b1a28;stroke:#33324a;stroke-width:1}
+      .flow{stroke:#7c5cff;stroke-width:2;fill:none;marker-end:url(#arrow)}
+    </style>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#7c5cff"/>
+    </marker>
+  </defs>
+
+  <rect width="860" height="560" fill="#0b0a14"/>
+  <text x="32" y="44" fill="url(#brand)" font-size="26" font-weight="800">Saarthi — system architecture</text>
+  <text x="32" y="66" class="sub">Autonomous AI chief-of-staff · Sense → Think → Act → Reflect</text>
+
+  <!-- USER -->
+  <rect x="32" y="100" width="180" height="150" rx="14" class="box"/>
+  <text x="50" y="126" class="h">User</text>
+  <rect x="50" y="140" width="146" height="26" rx="8" class="pill"/><text x="62" y="157" class="lbl">🎙 Voice (Hinglish)</text>
+  <rect x="50" y="174" width="146" height="26" rx="8" class="pill"/><text x="62" y="191" class="lbl">⌨ Text / quick-add</text>
+  <rect x="50" y="208" width="146" height="26" rx="8" class="pill"/><text x="62" y="225" class="lbl">📲 Telegram nudges</text>
+
+  <!-- SARVAM -->
+  <rect x="252" y="100" width="180" height="150" rx="14" class="box"/>
+  <text x="270" y="126" class="h">Sarvam AI · Voice</text>
+  <text x="270" y="146" class="sub">ears + mouth</text>
+  <rect x="270" y="158" width="146" height="30" rx="8" class="pill"/><text x="282" y="177" class="lbl">saaras:v3 — STT</text>
+  <rect x="270" y="196" width="146" height="30" rx="8" class="pill"/><text x="282" y="215" class="lbl">bulbul:v3 — TTS</text>
+
+  <!-- GEMINI BRAIN / SWARM -->
+  <rect x="472" y="92" width="356" height="280" rx="16" fill="#120f22" stroke="url(#brand)" stroke-width="2"/>
+  <text x="492" y="120" class="h">Gemini · the brain (function-calling swarm)</text>
+  <text x="492" y="140" class="sub">gemini-2.5-flash-lite · real tool-use loop</text>
+
+  <rect x="492" y="156" width="316" height="40" rx="10" fill="#1a1730" stroke="#3a2f6e"/>
+  <text x="506" y="181" class="lbl">🧠 Planner — decides which tools to call</text>
+
+  <rect x="492" y="206" width="152" height="70" rx="10" class="pill"/>
+  <text x="506" y="230" class="lbl">🛰 Sentinel</text><text x="506" y="248" class="sub">risk scoring 0–100</text><text x="506" y="264" class="sub">+ escalation tiers</text>
+  <rect x="656" y="206" width="152" height="70" rx="10" class="pill"/>
+  <text x="670" y="230" class="lbl">📅 Scheduler</text><text x="670" y="248" class="sub">books focus blocks</text>
+
+  <rect x="492" y="286" width="152" height="70" rx="10" class="pill"/>
+  <text x="506" y="310" class="lbl">✉ Drafter</text><text x="506" y="328" class="sub">writes emails</text>
+  <rect x="656" y="286" width="152" height="70" rx="10" class="pill"/>
+  <text x="670" y="310" class="lbl">🔊 Voice</text><text x="670" y="328" class="sub">spoken nudges</text>
+
+  <!-- GOOGLE HANDS -->
+  <rect x="252" y="300" width="180" height="120" rx="14" class="box"/>
+  <text x="270" y="326" class="h">Google · the hands</text>
+  <rect x="270" y="338" width="146" height="30" rx="8" class="pill"/><text x="282" y="357" class="lbl">📆 Calendar API</text>
+  <rect x="270" y="376" width="146" height="30" rx="8" class="pill"/><text x="282" y="395" class="lbl">✉ Gmail API (drafts)</text>
+
+  <!-- BODY: Cloud Run + Scheduler -->
+  <rect x="32" y="300" width="180" height="120" rx="14" class="box"/>
+  <text x="50" y="326" class="h">Google Cloud · body</text>
+  <rect x="50" y="338" width="146" height="30" rx="8" class="pill"/><text x="62" y="357" class="lbl">☁ Cloud Run (host)</text>
+  <rect x="50" y="376" width="146" height="30" rx="8" class="pill"/><text x="62" y="395" class="lbl">⏱ Cloud Scheduler</text>
+
+  <!-- proactive loop note -->
+  <rect x="32" y="452" width="796" height="76" rx="14" fill="#120f22" stroke="#2c2b40"/>
+  <text x="50" y="478" class="h">Proactive loop</text>
+  <text x="50" y="500" class="sub">Cloud Scheduler hits /api/cron every 30 min → the swarm runs autonomously → Telegram + voice nudges reach the user</text>
+  <text x="50" y="518" class="sub">even with the app closed. Graceful fallbacks (heuristic planner, browser voice, simulated actions) keep the live link always working.</text>
+
+  <!-- flows -->
+  <path class="flow" d="M212,175 L250,175"/>
+  <path class="flow" d="M432,175 L470,175"/>
+  <path class="flow" d="M560,372 L480,360 L432,360"/>
+  <path class="flow" d="M252,360 L214,360"/>
+  <text x="225" y="150" class="sub" transform="rotate(-90 225 150)">sense</text>
+</svg>

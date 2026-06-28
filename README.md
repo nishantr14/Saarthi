@@ -95,6 +95,33 @@ Enable the **Calendar API** and **Gmail API** in your Google Cloud project.
 
 > AI Studio note: you can also export/deploy via Google AI Studio per the hackathon docs; this repo is a standard container so it runs anywhere Cloud Run does.
 
+## Proactive autonomy (Cloud Scheduler)
+
+Make Saarthi act on its own, even with the app closed:
+
+```bash
+# 1. Set a shared secret on the service
+gcloud run services update saarthi --region asia-south1 --update-env-vars CRON_SECRET=YOUR_SECRET
+
+# 2. Schedule the swarm every 30 minutes
+gcloud scheduler jobs create http saarthi-proactive \
+  --location asia-south1 --schedule "*/30 * * * *" \
+  --uri "https://YOUR-SERVICE-URL/api/cron" \
+  --http-method GET \
+  --headers "x-cron-key=YOUR_SECRET"
+```
+
+## Telegram nudges (optional)
+
+Get a token from **@BotFather** and your chat id from **@userinfobot**, then:
+
+```bash
+gcloud run services update saarthi --region asia-south1 \
+  --update-env-vars TELEGRAM_BOT_TOKEN=...,TELEGRAM_CHAT_ID=...
+```
+
+Saarthi will message you whenever it acts — the proactive nudge that "reaches you where you are."
+
 ## Tech stack
 
 Next.js 14 (App Router, TypeScript) · Tailwind CSS · Framer Motion · Lucide · `@google/generative-ai` · `googleapis` · Sarvam REST · Docker (standalone) · Cloud Run.

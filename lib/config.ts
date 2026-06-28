@@ -2,7 +2,7 @@ import type { IntegrationStatus } from "./types";
 
 export const env = {
   geminiKey: process.env.GEMINI_API_KEY?.trim() || "",
-  geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
+  geminiModel: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash-lite",
   sarvamKey: process.env.SARVAM_API_KEY?.trim() || "",
   sarvamTtsModel: process.env.SARVAM_TTS_MODEL?.trim() || "bulbul:v3",
   sarvamSpeaker: process.env.SARVAM_TTS_SPEAKER?.trim() || "priya",
@@ -15,7 +15,16 @@ export const env = {
   // Public-link safety: keep Gemini + Sarvam live, but SIMULATE Calendar/Gmail
   // writes so a public visitor can't create real events/drafts in your account.
   simulateGoogle: process.env.SIMULATE_GOOGLE?.trim() === "true",
+  // Secret that Cloud Scheduler presents to the /api/cron endpoint.
+  cronSecret: process.env.CRON_SECRET?.trim() || "",
+  // Telegram proactive nudges (optional).
+  telegramToken: process.env.TELEGRAM_BOT_TOKEN?.trim() || "",
+  telegramChatId: process.env.TELEGRAM_CHAT_ID?.trim() || "",
 };
+
+export function hasTelegram(): boolean {
+  return env.telegramToken.length > 0 && env.telegramChatId.length > 0;
+}
 
 export function hasGemini(): boolean {
   return !env.forcedDemo && env.geminiKey.length > 0;
