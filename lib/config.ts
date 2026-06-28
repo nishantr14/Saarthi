@@ -12,6 +12,9 @@ export const env = {
   googleRedirect: process.env.GOOGLE_REDIRECT_URI?.trim() || "",
   googleRefreshToken: process.env.GOOGLE_REFRESH_TOKEN?.trim() || "",
   forcedDemo: process.env.DEMO_MODE?.trim() === "true",
+  // Public-link safety: keep Gemini + Sarvam live, but SIMULATE Calendar/Gmail
+  // writes so a public visitor can't create real events/drafts in your account.
+  simulateGoogle: process.env.SIMULATE_GOOGLE?.trim() === "true",
 };
 
 export function hasGemini(): boolean {
@@ -23,6 +26,7 @@ export function hasSarvam(): boolean {
 export function hasGoogle(): boolean {
   return (
     !env.forcedDemo &&
+    !env.simulateGoogle &&
     env.googleClientId.length > 0 &&
     env.googleClientSecret.length > 0 &&
     env.googleRefreshToken.length > 0
